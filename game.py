@@ -1,191 +1,70 @@
-import pygame
-import random
-import sys
+import mediapipe as mp
+import cv2
+import gaze
+import helpers
+import game 
 
-# 0 == NONE, 1 == RIGHT, 2 == LEFT, 3 ==  ENTER
+mp_face_mesh = mp.solutions.face_mesh  # initialize the face mesh model
+click = 0
+calibration = [[],[]]
 
-# TODO: get actual input from eye control (AMIT!)
-def get_amit_input():
-    x = random.randint(1, 1)
-    print(x)
-    return x
-
-
-# TODO: get actual stress level (AMIT&ARIEL!). In the meantime it is number, can be turned into a bool.
-def get_stress_level():
-    return 10
-
-
-def update_pos(current_pos):
-    amit_input = get_amit_input()
-    new_pos = current_pos
-    is_ENTER = False
-    if current_pos == 0:
-        if amit_input == 0:
-            new_pos = 0
-        if amit_input == 1:
-            new_pos = 1
-        if amit_input == 2:
-            new_pos = 3
-        if amit_input == 3:
-            new_pos = current_pos
-            is_ENTER = True
-
-    if current_pos == 1:
-        if amit_input == 0:
-            new_pos = 1
-        if amit_input == 1:
-            new_pos = 2
-        if amit_input == 2:
-            new_pos = 0
-        if amit_input == 3:
-            new_pos = current_pos
-            is_ENTER = True
-
-    if current_pos == 2:
-        if amit_input == 0:
-            new_pos = 2
-        if amit_input == 1:
-            new_pos = 3
-        if amit_input == 2:
-            new_pos = 1
-        if amit_input == 3:
-            new_pos = current_pos
-            is_ENTER = True
-
-    if current_pos == 3:
-        if amit_input == 0:
-            new_pos = 3
-        if amit_input == 1:
-            new_pos = 0
-        if amit_input == 2:
-            new_pos = 2
-        if amit_input == 3:
-            new_pos = current_pos
-            is_ENTER = True
-
-    return new_pos, is_ENTER
+'''
+Blink 
+'''
+blink_flag = True               # blinking flag, true if eyes are closed
+blink_counter = 0               # counts the number of blinks from the beginning of the stream
+BLINK_THRESHOLD = 10          # threshold to consider a blink
 
 
-pygame.init()
-screen_width = 800
-screen_height = 600
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Menu Example")
-font = pygame.font.Font(None, 36)
+# camera stream:
+randerer_gui = game.renderer()
+cap = cv2.VideoCapture(0)  # chose camera index (try 1, 2, 3)
+with mp_face_mesh.FaceMesh(
+        max_num_faces=1,  # number of faces to track in each frame
+        refine_landmarks=True,  # includes iris landmarks in the face mesh model
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5) as face_mesh:
+    while cap.isOpened():
+        success, image = cap.read()
+        if not success:  # no frame input
+            print("Ignoring empty camera frame.")
+            continue
+        # To improve performance, optionally mark the image as not writeable to
+        # pass by reference.
+        image.flags.writeable = False
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
+        results = face_mesh.process(image)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # frame back to BGR for OpenCV
 
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-WHITE = (255, 255, 255)
+        if results.multi_face_landmarks:
+            x, y = gaze.gaze(image, results.multi_face_landmarks[0], calibration)  # gaze estimation
+            if  x > 150 and click == 0: 
+                print('click right')
+                click = 1
+                randerer_gui.render_gui(gaze_input=2)
+            if  x < -150 and click == 0:
+                print('click left')
+                click = 2
+                randerer_gui.render_gui(gaze_input=1)
+            if abs(x) < 100:
+                click = 0
 
-stress_threshold = 50
-stress_level = get_stress_level()
-is_stressed = stress_level > stress_threshold
+            # blink detection
+            blink_val = helpers.eyes_close(results.multi_face_landmarks[0])
 
+            if blink_val < BLINK_THRESHOLD:
+                blink_counter = blink_counter + 1
+            if blink_val > BLINK_THRESHOLD * 2:
+                blink_counter = 0
+                blink_flag = False
 
-# TODO: change option names of the menus
-option_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-options = [
-    [(0, 0, screen_width // 2, screen_height // 2), option_names[0], RED],
-    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), option_names[1], GREEN],
-    [(0, screen_height // 2, screen_width // 2, screen_height // 2), option_names[2], BLUE],
-    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), option_names[3], YELLOW]
-]
+            if blink_counter > 10 and not blink_flag:
+                blink_flag = True
+                blink_counter = 0
+                randerer_gui.render_gui(gaze_input=3)
 
-current_menu = options
-current_pos = 0
-
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-
-    new_pos, is_ENTER = update_pos(current_pos)
-
-    if is_ENTER:
-        if option_names[current_pos] == option_names[0]:
-            if is_stressed:
-                is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), is_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), is_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[3], YELLOW]
-                ]
-            else:
-                no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), no_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), no_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[3], YELLOW]
-                ]
-        elif option_names[current_pos] == option_names[1]:
-            if is_stressed:
-                is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), is_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), is_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[3], YELLOW]
-                ]
-            else:
-                no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), no_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), no_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[3], YELLOW]
-                ]
-        elif option_names[current_pos] == option_names[2]:
-            if is_stressed:
-                is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), is_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), is_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[3], YELLOW]
-                ]
-            else:
-                no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), no_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), no_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[3], YELLOW]
-                ]
-        elif option_names[current_pos] == option_names[3]:
-            if is_stressed:
-                is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), is_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), is_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), is_stress_names[3], YELLOW]
-                ]
-            else:
-                no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                current_menu = [
-                    [(0, 0, screen_width // 2, screen_height // 2), no_stress_names[0], RED],
-                    [(screen_width // 2, 0, screen_width // 2, screen_height // 2), no_stress_names[1], GREEN],
-                    [(0, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[2], BLUE],
-                    [(screen_width // 2, screen_height // 2, screen_width // 2, screen_height // 2), no_stress_names[3], YELLOW]
-                ]
-
-    current_pos = new_pos
-
-    screen.fill(BLACK)
-
-    for i, (rect, text, color) in enumerate(current_menu):
-        pygame.draw.rect(screen, color, rect)
-        if i == current_pos:
-            pygame.draw.rect(screen, BLACK, rect, 20)
-        text_surface = font.render(text, True, BLACK)
-        text_rect = text_surface.get_rect(center=(rect[0] + rect[2] / 2, rect[1] + rect[3] / 2))
-        screen.blit(text_surface, text_rect)
-
-    pygame.display.flip()
+        randerer_gui.render_gui(gaze_input=0)
+        cv2.imshow('output window', image)
+        if cv2.waitKey(2) & 0xFF == 27:
+            break
+cap.release()

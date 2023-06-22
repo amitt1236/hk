@@ -2,6 +2,7 @@ import mediapipe as mp
 import cv2
 import gaze
 import helpers
+import game 
 
 mp_face_mesh = mp.solutions.face_mesh  # initialize the face mesh model
 click = 0
@@ -16,6 +17,7 @@ BLINK_THRESHOLD = 10          # threshold to consider a blink
 
 
 # camera stream:
+randerer_gui = game.renderer()
 cap = cv2.VideoCapture(0)  # chose camera index (try 1, 2, 3)
 with mp_face_mesh.FaceMesh(
         max_num_faces=1,  # number of faces to track in each frame
@@ -39,14 +41,17 @@ with mp_face_mesh.FaceMesh(
             if  x > 150 and click == 0: 
                 print('click right')
                 click = 1
+                randerer_gui.render_gui(gaze_input=2)
             if  x < -150 and click == 0:
                 print('click left')
-                click = 1
+                click = 2
+                randerer_gui.render_gui(gaze_input=1)
             if abs(x) < 100:
                 click = 0
 
             # blink detection
             blink_val = helpers.eyes_close(results.multi_face_landmarks[0])
+
             if blink_val < BLINK_THRESHOLD:
                 blink_counter = blink_counter + 1
             if blink_val > BLINK_THRESHOLD * 2:
@@ -56,8 +61,9 @@ with mp_face_mesh.FaceMesh(
             if blink_counter > 10 and not blink_flag:
                 blink_flag = True
                 blink_counter = 0
-                print('blink blink')
+                randerer_gui.render_gui(gaze_input=3)
 
+        randerer_gui.render_gui(gaze_input=0)
         cv2.imshow('output window', image)
         if cv2.waitKey(2) & 0xFF == 27:
             break
