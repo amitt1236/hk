@@ -4,9 +4,17 @@ import sys
 
 # 0 == NONE, 1 == RIGHT, 2 == LEFT, 3 ==  ENTER
 
+def prompt2gpt(stress_level, word):
+    if word == "one":
+        return ["one", "one1", "on2", "on3"]
+    else:
+        return ["twoo", "yayy", "yay", "two"]
+
+
 # TODO: get actual stress level (AMIT&ARIEL!). In the meantime it is number, can be turned into a bool.
 def get_stress_level():
     return 10
+
 
 class renderer():
     def __init__(self):
@@ -15,7 +23,7 @@ class renderer():
         self.screen_height = 600
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Menu Example")
-        self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(None, 20)
 
         self.BLACK = (0, 0, 0)
         self.RED = (255, 0, 0)
@@ -25,11 +33,12 @@ class renderer():
         self.WHITE = (255, 255, 255)
 
         stress_threshold = 50
-        stress_level = get_stress_level()
-        self.is_stressed = stress_level > stress_threshold
+        self.stress_level = get_stress_level()
+        self.is_stressed = self.stress_level > stress_threshold
 
         # TODO: change option names of the menus
-        self.option_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
+        # self.option_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
+        self.option_names = prompt2gpt(self.stress_level, "one")
         options = [
             [(0, 0, self.screen_width // 2, self.screen_height // 2), self.option_names[0], self.RED],
             [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), self.option_names[1], self.GREEN],
@@ -54,73 +63,49 @@ class renderer():
 
         if self.is_ENTER:
             if self.option_names[self.current_pos] == self.option_names[0]:
-                if self.is_stressed:
-                    is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[3], self.YELLOW]
-                    ]
-                else:
-                    no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[3], self.YELLOW]
-                    ]
+                new_options = prompt2gpt(self.stress_level, "nop")
+                self.current_menu = [
+                    [(0, 0, self.screen_width // 2, self.screen_height // 2), new_options[0], self.RED],
+                    [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), new_options[1],
+                     self.GREEN],
+                    [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[2], self.BLUE],
+                    [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[3], self.YELLOW]
+                ]
             elif self.option_names[self.current_pos] == self.option_names[1]:
-                if self.is_stressed:
-                    is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[3], self.YELLOW]
-                    ]
-                else:
-                    no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[3], self.YELLOW]
-                    ]
+                new_options = prompt2gpt(self.stress_level, "nop")
+                self.current_menu = [
+                    [(0, 0, self.screen_width // 2, self.screen_height // 2), new_options[0], self.RED],
+                    [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), new_options[1],
+                     self.GREEN],
+                    [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[2], self.BLUE],
+                    [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[3], self.YELLOW]
+                ]
             elif self.option_names[self.current_pos] == self.option_names[2]:
-                if self.is_stressed:
-                    is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[3], self.YELLOW]
-                    ]
-                else:
-                    no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[3], self.YELLOW]
-                    ]
+                new_options = prompt2gpt(self.stress_level, "nop")
+                self.current_menu = [
+                    [(0, 0, self.screen_width // 2, self.screen_height // 2), new_options[0], self.RED],
+                    [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), new_options[1],
+                     self.GREEN],
+                    [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[2], self.BLUE],
+                    [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[3], self.YELLOW]
+                ]
             elif self.option_names[self.current_pos] == self.option_names[3]:
-                if self.is_stressed:
-                    is_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), is_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), is_stress_names[3], self.YELLOW]
-                    ]
-                else:
-                    no_stress_names = ["Option 0", "Option 1", "Option 2", "Option 3"]
-                    self.current_menu = [
-                        [(0, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[0], self.RED],
-                        [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), no_stress_names[1], self.GREEN],
-                        [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[2], self.BLUE],
-                        [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2), no_stress_names[3], self.YELLOW]
-                    ]
+                new_options = prompt2gpt(self.stress_level, "nop")
+                self.current_menu = [
+                    [(0, 0, self.screen_width // 2, self.screen_height // 2), new_options[0], self.RED],
+                    [(self.screen_width // 2, 0, self.screen_width // 2, self.screen_height // 2), new_options[1],
+                     self.GREEN],
+                    [(0, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[2], self.BLUE],
+                    [(self.screen_width // 2, self.screen_height // 2, self.screen_width // 2, self.screen_height // 2),
+                     new_options[3], self.YELLOW]
+                ]
 
         self.screen.fill(self.BLACK)
 
@@ -133,3 +118,4 @@ class renderer():
             self.screen.blit(text_surface, text_rect)
 
         pygame.display.flip()
+        
